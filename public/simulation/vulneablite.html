@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulation: Vulnérabilité Backup Cloud</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <div id="app"></div>
+
+    <script>
+        let scenario = null; // 'whatsapp-backup', 'signal-backup'
+        let messages = [];
+        let backupEnabled = false;
+        let attackStep = 0; // 0: messaging, 1: backup, 2: attack, 3: result
+
+        function startScenario(type) {
+            scenario = type;
+            messages = [];
+            backupEnabled = false;
+            attackStep = 0;
+            render();
+        }
+
+        function addMessage() {
+            const msgNum = messages.length + 1;
+            messages.push({
+                id: msgNum,
+                text: `Message confidentiel #${msgNum}`,
+                content: `Informations sensibles du message ${msgNum}`,
+                encrypted: true,
+                timestamp: new Date().toLocaleTimeString('fr-FR')
+            });
+            render();
+        }
+
+        function toggleBackup() {
+            backupEnabled = !backupEnabled;
+            if (backupEnabled) {
+                attackStep = 1;
+            }
+            render();
+        }
+
+        function simulateAttack() {
+            attackStep = 2;
+            setTimeout(() => {
+                attackStep = 3;
+                render();
+            }, 2000);
+            render();
+        }
+
+        function reset() {
+            startScenario(null);
+        }
+
+        function render() {
+            const app = document.getElementById('app');
+            
+            app.innerHTML = `
+                <div class="min-h-screen bg-gradient-to-br from-gray-900 via-orange-900 to-red-900 p-8">
+                    <div class="max-w-6xl mx-auto">
+                        <!-- Header -->
+                        <div class="text-center mb-8">
+                            <h1 class="text-5xl font-bold text-white mb-2 flex items-center justify-center gap-3">
+                                ☁️ Vulnérabilité Backup Cloud
+                            </h1>
+                            <p class="text-xl text-gray-300">
+                                Le talon d'Achille du E2EE : Les sauvegardes non chiffrées
+                            </p>
+                        </div>
+
+                        ${!scenario ? `
+                            <!-- Scenario Selection -->
+                            <div class="grid grid-cols-2 gap-8 max-w-5xl mx-auto">
+                                <button onclick="startScenario('whatsapp-backup')" class="bg-red-500/20 backdrop-blur-lg rounded-2xl p-8 border-4 border-red-500 hover:border-red-400 transition-all hover:scale-105">
+                                    <div class="text-7xl mb-4">⚠️</div>
+                                    <h2 class="text-3xl font-bold text-white mb-4">WhatsApp</h2>
+                                    <p class="text-xl text-gray-200 mb-4">Backup Google Drive/iCloud</p>
+                                    <div class="bg-red-500/30 rounded-lg p-4">
+                                        <p class="text-white font-bold mb-2">❌ Problème Critique</p>
+                                        <p class="text-sm text-gray-200">
+                                            E2EE parfait... mais backup cloud NON CHIFFRÉ E2EE !
+                                            Contournement complet de la protection.
+                                        </p>
+                                    </div>
+                                </button>
+
+                                <button onclick="startScenario('signal-backup')" class="bg-green-500/20 backdrop-blur-lg rounded-2xl p-8 border-4 border-green-500 hover:border-green-400 transition-all hover:scale-105">
+                                    <div class="text-7xl mb-4">✅</div>
+                                    <h2 class="text-3xl font-bold text-white mb-4">Signal</h2>
+                                    <p class="text-xl text-gray-200 mb-4">Backup Chiffré Local</p>
+                                    <div class="bg-green-500/30 rounded-lg p-4">
+                                        <p class="text-white font-bold mb-2">✓ Protection Complète</p>
+                                        <p class="text-sm text-gray-200">
+                                            Backup chiffré E2EE avec phrase de passe.
+                                            Même Google/Apple ne peuvent pas lire.
+                                        </p>
+                                    </div>
+                                </button>
+                            </div>
+
+                            <!-- Warning Box -->
+                            <div class="mt-8 bg-yellow-500/20 border-2 border-yellow-500 rounded-xl p-6 max-w-5xl mx-auto">
+                                <div class="flex items-start gap-4">
+                                    <span class="text-4xl">⚠️</span>
+                                    <div>
+                                        <h3 class="text-yellow-300 font-bold text-xl mb-2">
+                                            Citation Importante
+                                        </h3>
+                                        <p class="text-white text-lg italic mb-2">
+                                            "Le E2EE de WhatsApp est excellent, mais si vous activez le backup Google Drive, 
+                                            vous contournez complètement cette protection."
+                                        </p>
+                                        <p class="text-gray-300 text-sm">
+                                            - Experts en sécurité, EFF, Amnesty International
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        ` : ''}
+
+                        ${scenario === 'whatsapp-backup' && attackStep === 0 ? `
+                            <div class="space-y-6">
+                                <!-- App Header -->
+                                <div class="bg-gradient-to-r from-green-600 to-green-700 rounded-xl p-6 border-2 border-green-500">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-4">
+                                            <div class="text-5xl">📱</div>
+                                            <div>
+                                                <h2 class="text-3xl font-bold text-white">WhatsApp</h2>
+                                                <p class="text-green-100">🔒 E2EE Activé (Protocole Signal)</p>
+                                            </div>
+                                        </div>
+                                        <button onclick="startScenario(null)" class="px-6 py-3 bg-white/20 hover:bg-white/30 text-white font-bold rounded-lg">
+                                            Changer d'App
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Actions -->
+                                <div class="grid grid-cols-2 gap-4">
+                                    <button onclick="addMessage()" class="px-8 py-6 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xl rounded-xl transition-all">
+                                        💬 Envoyer un Message Sensible
+                                    </button>
+                                    <button onclick="toggleBackup()" ${messages.length < 3 ? 'disabled' : ''} class="px-8 py-6 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-500 text-white font-bold text-xl rounded-xl transition-all">
+                                        ☁️ Activer Backup Google Drive
+                                    </button>
+                                </div>
+
+                                ${messages.length < 3 ? `
+                                    <div class="bg-blue-500/20 border border-blue-500/50 rounded-xl p-4 text-center">
+                                        <p class="text-blue-300">
+                                            📝 Envoyez 3 messages pour simuler une vraie conversation
+                                        </p>
+                                    </div>
+                                ` : ''}
+
+                                <!-- Messages -->
+                                <div class="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20">
+                                    <h3 class="text-2xl font-bold text-white mb-4 flex items-center gap-2">
+                                        💬 Conversation Chiffrée E2EE
+                                    </h3>
+                                    <div class="space-y-3">
+                                        ${messages.length === 0 ? `
+                                            <div class="text-center py-12 text-gray-400">
+                                                <div class="text-6xl mb-4">🔒</div>
+                                                <p>Vos messages sont protégés par E2EE</p>
+                                                <p class="text-sm mt-2">Envoyez votre premier message</p>
+                                            </div>
+                                        ` : messages.map(msg => `
+                                            <div class="bg-green-500/20 border-2 border-green-500/50 rounded-xl p-4">
+                                                <div class="flex items-start gap-3">
+                                                    <span class="text-2xl">🔒</span>
+                                                    <div class="flex-1">
+                                                        <div class="text-white font-bold mb-1">${msg.text}</div>
+                                                        <div class="text-sm text-gray-300 mb-2">${msg.content}</div>
+                                                        <div class="text-xs text-gray-400">${msg.timestamp}</div>
+                                                    </div>
+                                                    <div class="px-3 py-1 bg-green-600 rounded-full text-xs text-white font-bold">
+                                                        E2EE ✓
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+
+                                <!-- Security Status -->
+                                <div class="bg-green-500/20 border-2 border-green-500 rounded-xl p-6">
+                                    <h3 class="text-green-300 font-bold text-xl mb-3">✅ État de Sécurité Actuel</h3>
+                                    <ul class="space-y-2 text-white">
+                                        <li>✓ Chiffrement E2EE actif (Protocole Signal)</li>
+                                        <li>✓ Messages chiffrés de bout en bout</li>
+                                        <li>✓ WhatsApp ne peut pas lire vos messages</li>
+                                        <li>✓ Protection contre interception réseau</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        ` : ''}
+
+                        ${scenario === 'whatsapp-backup' && attackStep === 1 ? `
+                            <div class="space-y-6">
+                                <!-- Backup Activation -->
+                                <div class="bg-orange-500/30 backdrop-blur-lg rounded-2xl p-8 border-4 border-orange-500">
+                                    <div class="text-center mb-6">
+                                        <div class="text-8xl mb-4">☁️</div>
+                                        <h2 class="text-4xl font-bold text-white mb-2">Backup Google Drive Activé</h2>
+                                        <p class="text-xl text-gray-200">
+                                            Vos conversations sont maintenant sauvegardées dans le cloud
+                                        </p>
+                                    </div>
+
+                                    <div class="bg-white/10 rounded-xl p-6 mb-6">
+                                        <div class="flex items-start gap-4 mb-4">
+                                            <span class="text-3xl">⚙️</span>
+                                            <div>
+                                                <p class="text-white font-bold mb-2">Configuration Backup:</p>
+                                                <ul class="text-gray-200 space-y-1 text-sm">
+                                                    <li>📍 Emplacement: Google Drive</li>
+                                                    <li>🔄 Fréquence: Quotidienne</li>
+                                                    <li>📊 Contenu: ${messages.length} messages</li>
+                                                    <li>🔐 Chiffrement: <span class="text-red-400 font-bold">NON E2EE !</span></li>
+                                                </ul>
+                                            </div>
+                                        </div>
+
+                                        <div class="bg-red-500/30 border-2 border-red-500 rounded-lg p-4">
+                                            <p class="text-red-300 font-bold mb-2">⚠️ ATTENTION</p>
+                                            <p class="text-white text-sm">
+                                                Le backup Google Drive n'est <strong>PAS chiffré E2EE</strong>. 
+                                                Google peut techniquement accéder à vos messages sauvegardés.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Vulnerability Explanation -->
+                                <div class="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20">
+                                    <h3 class="text-2xl font-bold text-white mb-4">🔍 Analyse de la Vulnérabilité</h3>
+                                    <div class="grid grid-cols-2 gap-6">
+                                        <div class="bg-green-500/20 rounded-lg p-4 border border-green-500/50">
+                                            <h4 class="text-green-300 font-bold mb-3">✓ Messages en Transit</h4>
+                                            <p class="text-sm text-gray-300">
+                                                Pendant l'envoi: Chiffrement E2EE parfait. 
+                                                Personne ne peut intercepter.
+                                            </p>
+                                        </div>
+                                        <div class="bg-red-500/20 rounded-lg p-4 border border-red-500/50">
+                                            <h4 class="text-red-300 font-bold mb-3">✗ Messages dans le Backup</h4>
+                                            <p class="text-sm text-gray-300">
+                                                Dans Google Drive: Chiffrement standard Google, 
+                                                PAS E2EE. Accessible via subpoena.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Attack Simulation -->
+                                <button onclick="simulateAttack()" class="w-full px-8 py-6 bg-red-600 hover:bg-red-700 text-white font-bold text-xl rounded-xl transition-all flex items-center justify-center gap-3">
+                                    🎯 Simuler un Accès Non Autorisé
+                                </button>
+                            </div>
+                        ` : ''}
+
+                        ${scenario === 'whatsapp-backup' && attackStep === 2 ? `
+                            <div class="bg-red-500/30 backdrop-blur-lg rounded-2xl p-12 border-4 border-red-500 text-center">
+                                <div class="text-8xl mb-6 animate-pulse">🔍</div>
+                                <h2 class="text-4xl font-bold text-white mb-4">Accès en cours...</h2>
+                                <p class="text-xl text-gray-200">
+                                    Demande légale, piratage Google account, ou employé malveillant
+                                </p>
+                                <div class="mt-6">
+                                    <div class="w-full bg-gray-700 rounded-full h-4">
+                                        <div class="bg-red-500 h-4 rounded-full animate-pulse" style="width: 100%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        ` : ''}
+
+                        ${scenario === 'whatsapp-backup' && attackStep === 3 ? `
+                            <div class="space-y-6">
+                                <!-- Attack Success -->
+                                <div class="bg-red-500/30 backdrop-blur-lg rounded-2xl p-8 border-4 border-red-500">
+                                    <div class="text-center mb-6">
+                                        <div class="text-9xl mb-4">🚨</div>
+                                        <h2 class="text-4xl font-bold text-red-300 mb-2">
+                                            TOUS LES MESSAGES EXPOSÉS !
+                                        </h2>
+                                        <p class="text-xl text-gray-200">
+                                            Le backup Google Drive a été compromis
+                                        </p>
+                                    </div>
+
+                                    <div class="bg-black/40 rounded-xl p-6 mb-4">
+                                        <p class="text-red-300 font-bold mb-4 text-center">
+                                            ❌ Contenu du Backup Accessible:
+                                        </p>
+                                        <div class="space-y-2">
+                                            ${messages.map(msg => `
+                                                <div class="bg-red-600/30 rounded-lg p-3 border border-red-500">
+                                                    <div class="text-white font-bold">${msg.text}</div>
+                                                    <div class="text-sm text-gray-300">${msg.content}</div>
+                                                    <div class="text-xs text-gray-400 mt-1">${msg.timestamp}</div>
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+
+                                    <div class="bg-red-600/50 rounded-xl p-6">
+                                        <h3 class="text-white font-bold text-lg mb-3">Comment cela peut arriver :</h3>
+                                        <ul class="text-white space-y-2">
+                                            <li>⚖️ <strong>Demande légale</strong> : Subpoena, ordre judiciaire</li>
+                                            <li>🔓 <strong>Piratage compte Google</strong> : Phishing, credential stuffing</li>
+                                            <li>👤 <strong>Employé malveillant</strong> : Google employee abuse</li>
+                                            <li>🏢 <strong>Compromission Google</strong> : Faille de sécurité</li>
+                                            <li>🔎 <strong>Surveillance de masse</strong> : Programmes gouvernementaux</li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <!-- Comparison -->
+                                <div class="grid grid-cols-2 gap-6">
+                                    <div class="bg-red-500/20 rounded-xl p-6 border-2 border-red-500">
+                                        <h3 class="text-red-300 font-bold text-xl mb-4">❌ Ce qui n'a PAS protégé</h3>
+                                        <ul class="text-white space-y-2 text-sm">
+                                            <li>✗ E2EE sur les messages en transit</li>
+                                            <li>✗ Protocole Signal impeccable</li>
+                                            <li>✗ Chiffrement WhatsApp excellent</li>
+                                            <li>✗ <strong>MAIS: Backup non-E2EE = échec total</strong></li>
+                                        </ul>
+                                    </div>
+                                    <div class="bg-green-500/20 rounded-xl p-6 border-2 border-green-500">
+                                        <h3 class="text-green-300 font-bold text-xl mb-4">✅ Solution Signal</h3>
+                                        <ul class="text-white space-y-2 text-sm">
+                                            <li>✓ Backup chiffré E2EE</li>
+                                            <li>✓ Phrase de passe unique</li>
+                                            <li>✓ Même Google ne peut pas lire</li>
+                                            <li>✓ Protection cohérente bout-en-bout</li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-2 gap-4">
+                                    <button onclick="reset()" class="px-6 py-4 bg-gray-600 hover:bg-gray-700 text-white font-bold rounded-xl transition-all">
+                                        🔄 Recommencer
+                                    </button>
+                                    <button onclick="startScenario('signal-backup')" class="px-6 py-4 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl transition-all">
+                                        ✅ Voir Signal (Sécurisé)
+                                    </button>
+                                </div>
+                            </div>
+                        ` : ''}
+
+                        ${scenario === 'signal-backup' ? `
+                            <div class="space-y-6">
+                                <!-- Signal Header -->
+                                <div class="bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl p-6 border-2 border-blue-500">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-4">
+                                            <div class="text-5xl">📱</div>
+                                            <div>
+                                                <h2 class="text-3xl font-bold text-white">Signal</h2>
+                                                <p class="text-blue-100">🔒 E2EE + Backup Chiffré E2EE</p>
+                                            </div>
+                                        </div>
+                                        <button onclick="startScenario(null)" class="px-6 py-3 bg-white/20 hover:bg-white/30 text-white font-bold rounded-lg">
+                                            Changer d'App
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Signal Backup Explanation -->
+                                <div class="bg-green-500/20 backdrop-blur-lg rounded-2xl p-8 border-4 border-green-500">
+                                    <div class="text-center mb-6">
+                                        <div class="text-8xl mb-4">✅</div>
+                                        <h2 class="text-4xl font-bold text-white mb-2">Protection Complète</h2>
+                                        <p class="text-xl text-gray-200">
+                                            Backup chiffré E2EE avec phrase de passe unique
+                                        </p>
+                                    </div>
+
+                                    <div class="grid grid-cols-2 gap-6 mb-6">
+                                        <div class="bg-white/10 rounded-xl p-6">
+                                            <h4 class="text-white font-bold mb-3 flex items-center gap-2">
+                                                <span class="text-2xl">💬</span>
+                                                Messages en Transit
+                                            </h4>
+                                            <ul class="text-gray-200 text-sm space-y-2">
+                                                <li>✓ E2EE (Protocole Signal)</li>
+                                                <li>✓ Perfect Forward Secrecy</li>
+                                                <li>✓ Double Ratchet</li>
+                                                <li>✓ Sealed Sender</li>
+                                            </ul>
+                                        </div>
+                                        <div class="bg-white/10 rounded-xl p-6">
+                                            <h4 class="text-white font-bold mb-3 flex items-center gap-2">
+                                                <span class="text-2xl">💾</span>
+                                                Backup Local
+                                            </h4>
+                                            <ul class="text-gray-200 text-sm space-y-2">
+                                                <li>✓ Chiffré E2EE</li>
+                                                <li>✓ Phrase de passe 30 chiffres</li>
+                                                <li>✓ Stockage local uniquement</li>
+                                                <li>✓ Signal ne peut pas lire</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+
+                                    <div class="bg-green-600/50 rounded-xl p-6">
+                                        <h3 class="text-white font-bold text-xl mb-3">🛡️ Avantages Signal:</h3>
+                                        <ul class="text-white space-y-2">
+                                            <li>✓ <strong>Cohérence totale</strong> : E2EE partout (messages + backup)</li>
+                                            <li>✓ <strong>Zero-knowledge</strong> : Même Signal ne peut pas accéder</li>
+                                            <li>✓ <strong>Pas de cloud</strong> : Pas de risque de subpoena Google/Apple</li>
+                                            <li>✓ <strong>Contrôle utilisateur</strong> : Phrase de passe = seule clé</li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <!-- Attack Simulation on Signal -->
+                                <div class="bg-blue-500/20 rounded-xl p-6 border-2 border-blue-500">
+                                    <h3 class="text-blue-300 font-bold text-xl mb-4">🎯 Tentative d'Accès Non Autorisé</h3>
+                                    <div class="bg-black/30 rounded-lg p-6">
+                                        <p class="text-white mb-4">Scénarios testés :</p>
+                                        <div class="space-y-3">
+                                            <div class="flex items-center gap-3">
+                                                <span class="text-2xl">🔒</span>
+                                                <div class="flex-1">
+                                                    <p class="text-white font-bold">Demande légale à Signal</p>
+                                                    <p class="text-sm text-gray-300">Résultat: Aucune donnée à fournir (backup local)</p>
+                                                </div>
+                                                <span class="px-3 py-1 bg-green-600 rounded-full text-xs text-white font-bold">BLOQUÉ</span>
+                                            </div>
+                                            <div class="flex items-center gap-3">
+                                                <span class="text-2xl">🔒</span>
+                                                <div class="flex-1">
+                                                    <p class="text-white font-bold">Piratage appareil (backup trouvé)</p>
+                                                    <p class="text-sm text-gray-300">Résultat: Fichier chiffré E2EE illisible</p>
+                                                </div>
+                                                <span class="px-3 py-1 bg-green-600 rounded-full text-xs text-white font-bold">BLOQUÉ</span>
+                                            </div>
+                                            <div class="flex items-center gap-3">
+                                                <span class="text-2xl">🔒</span>
+                                                <div class="flex-1">
+                                                    <p class="text-white font-bold">Employé Signal malveillant</p>
+                                                    <p class="text-sm text-gray-300">Résultat: Zéro accès aux backups utilisateurs</p>
+                                                </div>
+                                                <span class="px-3 py-1 bg-green-600 rounded-full text-xs text-white font-bold">BLOQUÉ</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Comparison Table -->
+                                <div class="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20">
+                                    <h3 class="text-2xl font-bold text-white mb-4">📊 Comparaison Backup</h3>
+                                    <div class="overflow-x-auto">
+                                        <table class="w-full text-white">
+                                            <thead>
+                                                <tr class="border-b border-white/20">
+                                                    <th class="text-left p-3">Critère</th>
+                                                    <th class="text-center p-3">Signal</th>
+                                                    <th class="text-center p-3">WhatsApp</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr class="border-b border-white/10">
+                                                    <td class="p-3">Chiffrement Backup</td>
+                                                    <td class="text-center text-green-400">✅ E2EE</td>
+                                                    <td class="text-center text-red-400">❌ Standard Google</td>
+                                                </tr>
+                                                <tr class="border-b border-white/10">
+                                                    <td class="p-3">Stockage</td>
+                                                    <td class="text-center text-green-400">✅ Local</td>
+                                                    <td class="text-center text-red-400">❌ Cloud (Google/Apple)</td>
+                                                </tr>
+                                                <tr class="border-b border-white/10">
+                                                    <td class="p-3">Accessible par subpoena</td>
+                                                    <td class="text-center text-green-400">✅ Non</td>
+                                                    <td class="text-center text-red-400">❌ Oui</td>
+                                                </tr>
+                                                <tr class="border-b border-white/10">
+                                                    <td class="p-3">Contrôle utilisateur</td>
+                                                    <td class="text-center text-green-400">✅ Total</td>
+                                                    <td class="text-center text-red-400">❌ Partiel</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="p-3 font-bold">Sécurité Globale</td>
+                                                    <td class="text-center text-green-400 font-bold">✅ Excellente</td>
+                                                    <td class="text-center text-red-400 font-bold">❌ Compromise</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <button onclick="startScenario('whatsapp-backup')" class="w-full px-6 py-4 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-xl transition-all">
+                                    ⚠️ Comparer avec WhatsApp (Vulnérable)
+                                </button>
+                            </div>
+                        ` : ''}
+
+                        <!-- Info Box -->
+                        <div class="mt-8 bg-purple-500/20 border border-purple-500/50 rounded-xl p-6">
+                            <h3 class="text-purple-300 font-bold text-lg mb-3">💡 Pourquoi c'est Important ?</h3>
+                            <div class="grid grid-cols-2 gap-6 text-white text-sm">
+                                <div>
+                                    <p class="font-semibold mb-2 text-yellow-300">Le Problème WhatsApp:</p>
+                                    <p class="text-gray-300">
+                                        E2EE parfait pendant la transmission, mais backup Google Drive/iCloud 
+                                        NON chiffré E2EE = contournement total de la protection. 
+                                        Accessible par demande légale.
+                                    </p>
+                                </div>
+                                <div>
+                                    <p class="font-semibold mb-2 text-yellow-300">La Solution Signal:</p>
+                                    <p class="text-gray-300">
+                                        Backup chiffré E2EE avec phrase de passe de 30 chiffres. 
+                                        Même Signal ne peut pas accéder. Protection cohérente de bout en bout.
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="mt-4 bg-red-500/30 rounded-lg p-4 border border-red-500">
+                                <p class="text-white text-sm">
+                                    <strong>⚠️ Recommandation:</strong> Si vous utilisez WhatsApp pour des communications sensibles, 
+                                    <strong>DÉSACTIVEZ le backup cloud</strong> ou migrez vers Signal.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        window.startScenario = startScenario;
+        window.addMessage = addMessage;
+        window.toggleBackup = toggleBackup;
+        window.simulateAttack = simulateAttack;
+        window.reset = reset;
+
+        render();
+    </script>
+</body>
+</html>

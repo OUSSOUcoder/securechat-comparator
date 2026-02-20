@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz: Modèle de Menace Personnel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <div id="app"></div>
+
+    <script>
+        let currentQuestion = 0;
+        let answers = {
+            adversary: 0,      // 0: faible, 1: moyen, 2: élevé
+            sensitivity: 0,    // 0: faible, 1: moyen, 2: élevé
+            consequences: 0,   // 0: faible, 1: moyen, 2: élevé
+            technical: 0,      // 0: débutant, 1: intermédiaire, 2: avancé
+            usage: 0          // 0: personnel, 1: professionnel, 2: activisme
+        };
+        let showResult = false;
+
+        const questions = [
+            {
+                id: 'adversary',
+                title: '1. Qui pourrait vouloir accéder à vos communications ?',
+                icon: '🎯',
+                options: [
+                    { 
+                        text: 'Hackers opportunistes, curieux, ex-partenaires', 
+                        value: 0,
+                        detail: 'Menace faible - Attaquants non sophistiqués'
+                    },
+                    { 
+                        text: 'Entreprises (publicité), concurrents, cybercriminels organisés', 
+                        value: 1,
+                        detail: 'Menace moyenne - Ressources modérées'
+                    },
+                    { 
+                        text: 'États-nations, services de renseignement, organisations avec moyens importants', 
+                        value: 2,
+                        detail: 'Menace élevée - Adversaires sophistiqués'
+                    }
+                ]
+            },
+            {
+                id: 'sensitivity',
+                title: '2. Quel type de données échangez-vous ?',
+                icon: '📊',
+                options: [
+                    { 
+                        text: 'Conversations personnelles, photos de famille, coordination quotidienne', 
+                        value: 0,
+                        detail: 'Sensibilité faible - Usage grand public'
+                    },
+                    { 
+                        text: 'Informations professionnelles, données financières, secrets commerciaux', 
+                        value: 1,
+                        detail: 'Sensibilité moyenne - Besoins professionnels'
+                    },
+                    { 
+                        text: 'Sources journalistiques, activisme politique, données médicales sensibles', 
+                        value: 2,
+                        detail: 'Sensibilité élevée - Informations critiques'
+                    }
+                ]
+            },
+            {
+                id: 'consequences',
+                title: '3. Quelles seraient les conséquences d\'une fuite ?',
+                icon: '⚠️',
+                options: [
+                    { 
+                        text: 'Gêne personnelle, embarras social', 
+                        value: 0,
+                        detail: 'Impact faible - Désagrément mineur'
+                    },
+                    { 
+                        text: 'Pertes financières, dommages réputation professionnelle, problèmes juridiques', 
+                        value: 1,
+                        detail: 'Impact moyen - Conséquences sérieuses'
+                    },
+                    { 
+                        text: 'Danger physique, emprisonnement, risque vital pour vous ou vos sources', 
+                        value: 2,
+                        detail: 'Impact critique - Danger immédiat'
+                    }
+                ]
+            },
+            {
+                id: 'technical',
+                title: '4. Quel est votre niveau technique ?',
+                icon: '💻',
+                options: [
+                    { 
+                        text: 'Débutant - Je veux quelque chose qui marche simplement', 
+                        value: 0,
+                        detail: 'Priorité: Simplicité d\'utilisation'
+                    },
+                    { 
+                        text: 'Intermédiaire - Je peux configurer des options de sécurité', 
+                        value: 1,
+                        detail: 'Capable de paramétrage avancé'
+                    },
+                    { 
+                        text: 'Avancé - Je comprends la cryptographie et peux auditer le code', 
+                        value: 2,
+                        detail: 'Expertise technique confirmée'
+                    }
+                ]
+            },
+            {
+                id: 'usage',
+                title: '5. Quel est votre contexte d\'utilisation ?',
+                icon: '👥',
+                options: [
+                    { 
+                        text: 'Usage personnel - Famille et amis', 
+                        value: 0,
+                        detail: 'Communication privée standard'
+                    },
+                    { 
+                        text: 'Usage professionnel - Équipe, clients, partenaires', 
+                        value: 1,
+                        detail: 'Environnement business'
+                    },
+                    { 
+                        text: 'Usage sensible - Journalisme, activisme, avocat, médecin', 
+                        value: 2,
+                        detail: 'Protection renforcée requise'
+                    }
+                ]
+            }
+        ];
+
+        function selectAnswer(questionId, value) {
+            answers[questionId] = value;
+            if (currentQuestion < questions.length - 1) {
+                currentQuestion++;
+            } else {
+                showResult = true;
+            }
+            render();
+        }
+
+        function restart() {
+            currentQuestion = 0;
+            answers = { adversary: 0, sensitivity: 0, consequences: 0, technical: 0, usage: 0 };
+            showResult = false;
+            render();
+        }
+
+        function calculateRisk() {
+            const total = answers.adversary + answers.sensitivity + answers.consequences;
+            if (total <= 2) return 'low';
+            if (total <= 4) return 'medium';
+            return 'high';
+        }
+
+        function getRecommendation() {
+            const risk = calculateRisk();
+            const tech = answers.technical;
+            const usage = answers.usage;
+
+            // Signal recommandé pour risque moyen à élevé
+            if (risk === 'high' || usage === 2) {
+                return {
+                    primary: 'signal',
+                    reason: 'Votre profil nécessite la protection maximale',
+                    mandatory: true
+                };
+            }
+
+            // WhatsApp acceptable pour risque faible + usage personnel
+            if (risk === 'low' && usage === 0) {
+                return {
+                    primary: 'whatsapp',
+                    reason: 'Protection E2EE suffisante pour usage personnel standard',
+                    mandatory: false,
+                    warning: 'Désactivez le backup cloud pour plus de sécurité'
+                };
+            }
+
+            // Signal recommandé par défaut pour risque moyen
+            return {
+                primary: 'signal',
+                reason: 'Signal offre le meilleur équilibre sécurité/simplicité',
+                mandatory: false
+            };
+        }
+
+        function render() {
+            const app = document.getElementById('app');
+            const question = questions[currentQuestion];
+            
+            if (!showResult) {
+                app.innerHTML = `
+                    <div class="min-h-screen bg-gradient-to-br from-blue-900 via-indigo-900 to-purple-900 p-8">
+                        <div class="max-w-4xl mx-auto">
+                            <!-- Header -->
+                            <div class="text-center mb-8">
+                                <h1 class="text-5xl font-bold text-white mb-2">
+                                    🎯 Quel est votre Modèle de Menace ?
+                                </h1>
+                                <p class="text-xl text-gray-300">
+                                    5 questions pour trouver l'application adaptée à VOS besoins
+                                </p>
+                            </div>
+
+                            <!-- Progress -->
+                            <div class="mb-8">
+                                <div class="flex justify-between mb-2">
+                                    <span class="text-white font-bold">Question ${currentQuestion + 1} sur ${questions.length}</span>
+                                    <span class="text-gray-300">${Math.round(((currentQuestion + 1) / questions.length) * 100)}%</span>
+                                </div>
+                                <div class="w-full bg-gray-700 rounded-full h-3">
+                                    <div class="bg-gradient-to-r from-blue-500 to-purple-500 h-3 rounded-full transition-all duration-500" 
+                                         style="width: ${((currentQuestion + 1) / questions.length) * 100}%"></div>
+                                </div>
+                            </div>
+
+                            <!-- Question Card -->
+                            <div class="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border-2 border-white/20 mb-6">
+                                <div class="text-center mb-8">
+                                    <div class="text-7xl mb-4">${question.icon}</div>
+                                    <h2 class="text-3xl font-bold text-white">
+                                        ${question.title}
+                                    </h2>
+                                </div>
+
+                                <div class="space-y-4">
+                                    ${question.options.map((option, idx) => `
+                                        <button onclick="selectAnswer('${question.id}', ${option.value})" 
+                                                class="w-full p-6 rounded-xl bg-white/5 hover:bg-white/20 border-2 border-white/30 hover:border-blue-400 transition-all text-left group">
+                                            <div class="flex items-start gap-4">
+                                                <div class="text-3xl group-hover:scale-110 transition-transform">
+                                                    ${['🟢', '🟡', '🔴'][option.value]}
+                                                </div>
+                                                <div class="flex-1">
+                                                    <p class="text-white font-bold text-lg mb-1">
+                                                        ${option.text}
+                                                    </p>
+                                                    <p class="text-gray-400 text-sm">
+                                                        ${option.detail}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </button>
+                                    `).join('')}
+                                </div>
+                            </div>
+
+                            ${currentQuestion > 0 ? `
+                                <button onclick="currentQuestion--; render();" 
+                                        class="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white font-bold rounded-lg transition-all">
+                                    ← Question Précédente
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            } else {
+                const recommendation = getRecommendation();
+                const risk = calculateRisk();
+                const riskData = {
+                    low: { 
+                        label: 'Risque Faible', 
+                        color: 'green', 
+                        icon: '🟢',
+                        description: 'Surveillance de masse, hackers opportunistes'
+                    },
+                    medium: { 
+                        label: 'Risque Moyen', 
+                        color: 'yellow', 
+                        icon: '🟡',
+                        description: 'Ciblage possible, adversaires avec moyens'
+                    },
+                    high: { 
+                        label: 'Risque Élevé', 
+                        color: 'red', 
+                        icon: '🔴',
+                        description: 'Ciblage actif, adversaires sophistiqués'
+                    }
+                };
+
+                const apps = {
+                    signal: {
+                        name: 'Signal',
+                        icon: '🔵',
+                        color: 'blue',
+                        pros: [
+                            'E2EE par défaut (100%)',
+                            'Minimisation métadonnées maximale',
+                            'Open source totalement auditable',
+                            'Backup chiffré E2EE',
+                            'Aucun partage de données',
+                            'Recommandé par tous les experts'
+                        ],
+                        cons: [
+                            'Réseau plus petit (40M utilisateurs)',
+                            'Fonctionnalités moins riches que Telegram'
+                        ]
+                    },
+                    whatsapp: {
+                        name: 'WhatsApp',
+                        icon: '🟠',
+                        color: 'orange',
+                        pros: [
+                            'E2EE par défaut (protocole Signal)',
+                            'Réseau énorme (2+ milliards)',
+                            'Facile d\'utilisation',
+                            'Familier pour la majorité'
+                        ],
+                        cons: [
+                            'Métadonnées partagées avec Meta',
+                            'Backup cloud NON E2EE (critique)',
+                            'Code source fermé',
+                            'Modèle publicitaire Meta'
+                        ],
+                        warning: 'IMPORTANT: Désactivez le backup Google Drive/iCloud'
+                    },
+                    telegram: {
+                        name: 'Telegram',
+                        icon: '🟢',
+                        color: 'teal',
+                        pros: [
+                            'Fonctionnalités très riches',
+                            'Groupes jusqu\'à 200k membres',
+                            'Cloud sync parfaite',
+                            'Bots et channels avancés'
+                        ],
+                        cons: [
+                            'E2EE NON activé par défaut',
+                            'Secret Chats: mobile only, pas de groupes',
+                            'Métadonnées extensives collectées',
+                            'Serveur propriétaire fermé'
+                        ],
+                        warning: 'Utilisez Secret Chats pour communications sensibles'
+                    }
+                };
+
+                const primaryApp = apps[recommendation.primary];
+                const currentRisk = riskData[risk];
+
+                app.innerHTML = `
+                    <div class="min-h-screen bg-gradient-to-br from-blue-900 via-indigo-900 to-purple-900 p-8">
+                        <div class="max-w-6xl mx-auto">
+                            <!-- Header -->
+                            <div class="text-center mb-8">
+                                <h1 class="text-5xl font-bold text-white mb-2">
+                                    📊 Votre Profil de Sécurité
+                                </h1>
+                                <p class="text-xl text-gray-300">
+                                    Recommandation personnalisée basée sur vos réponses
+                                </p>
+                            </div>
+
+                            <!-- Risk Assessment -->
+                            <div class="bg-${currentRisk.color}-500/20 backdrop-blur-lg rounded-2xl p-8 border-4 border-${currentRisk.color}-500 mb-8">
+                                <div class="text-center mb-6">
+                                    <div class="text-8xl mb-4">${currentRisk.icon}</div>
+                                    <h2 class="text-4xl font-bold text-white mb-2">
+                                        ${currentRisk.label}
+                                    </h2>
+                                    <p class="text-xl text-gray-200">
+                                        ${currentRisk.description}
+                                    </p>
+                                </div>
+
+                                <div class="grid grid-cols-5 gap-4">
+                                    <div class="bg-white/10 rounded-xl p-4 text-center">
+                                        <div class="text-3xl mb-2">${['🟢', '🟡', '🔴'][answers.adversary]}</div>
+                                        <div class="text-white font-bold text-sm">Adversaire</div>
+                                        <div class="text-xs text-gray-300 mt-1">${['Faible', 'Moyen', 'Élevé'][answers.adversary]}</div>
+                                    </div>
+                                    <div class="bg-white/10 rounded-xl p-4 text-center">
+                                        <div class="text-3xl mb-2">${['🟢', '🟡', '🔴'][answers.sensitivity]}</div>
+                                        <div class="text-white font-bold text-sm">Sensibilité</div>
+                                        <div class="text-xs text-gray-300 mt-1">${['Faible', 'Moyen', 'Élevé'][answers.sensitivity]}</div>
+                                    </div>
+                                    <div class="bg-white/10 rounded-xl p-4 text-center">
+                                        <div class="text-3xl mb-2">${['🟢', '🟡', '🔴'][answers.consequences]}</div>
+                                        <div class="text-white font-bold text-sm">Impact</div>
+                                        <div class="text-xs text-gray-300 mt-1">${['Faible', 'Moyen', 'Critique'][answers.consequences]}</div>
+                                    </div>
+                                    <div class="bg-white/10 rounded-xl p-4 text-center">
+                                        <div class="text-3xl mb-2">${['🔰', '💻', '🎓'][answers.technical]}</div>
+                                        <div class="text-white font-bold text-sm">Niveau</div>
+                                        <div class="text-xs text-gray-300 mt-1">${['Débutant', 'Inter.', 'Avancé'][answers.technical]}</div>
+                                    </div>
+                                    <div class="bg-white/10 rounded-xl p-4 text-center">
+                                        <div class="text-3xl mb-2">${['👥', '💼', '🔒'][answers.usage]}</div>
+                                        <div class="text-white font-bold text-sm">Usage</div>
+                                        <div class="text-xs text-gray-300 mt-1">${['Personnel', 'Pro', 'Sensible'][answers.usage]}</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Primary Recommendation -->
+                            <div class="bg-${primaryApp.color}-500/20 backdrop-blur-lg rounded-2xl p-8 border-4 border-${primaryApp.color}-500 mb-8">
+                                <div class="flex items-start gap-6">
+                                    <div class="text-8xl">${primaryApp.icon}</div>
+                                    <div class="flex-1">
+                                        <div class="flex items-center gap-3 mb-4">
+                                            <h2 class="text-4xl font-bold text-white">
+                                                ${recommendation.mandatory ? '✅ RECOMMANDATION FORTE' : '💡 RECOMMANDATION'}
+                                            </h2>
+                                        </div>
+                                        <h3 class="text-3xl font-bold text-white mb-3">${primaryApp.name}</h3>
+                                        <p class="text-xl text-gray-200 mb-6">${recommendation.reason}</p>
+
+                                        ${recommendation.mandatory ? `
+                                            <div class="bg-red-500/30 border-2 border-red-500 rounded-lg p-4 mb-4">
+                                                <p class="text-white font-bold">
+                                                    ⚠️ Compte tenu de votre profil de risque, Signal est FORTEMENT recommandé.
+                                                    Les alternatives présentent des vulnérabilités inacceptables pour votre cas.
+                                                </p>
+                                            </div>
+                                        ` : ''}
+
+                                        ${primaryApp.warning ? `
+                                            <div class="bg-yellow-500/30 border-2 border-yellow-500 rounded-lg p-4 mb-4">
+                                                <p class="text-white font-bold">
+                                                    ⚠️ ${primaryApp.warning}
+                                                </p>
+                                            </div>
+                                        ` : ''}
+
+                                        <div class="grid grid-cols-2 gap-6">
+                                            <div>
+                                                <h4 class="text-green-300 font-bold mb-3 flex items-center gap-2">
+                                                    <span class="text-2xl">✅</span>
+                                                    Points Forts
+                                                </h4>
+                                                <ul class="space-y-2">
+                                                    ${primaryApp.pros.map(pro => `
+                                                        <li class="text-white text-sm">✓ ${pro}</li>
+                                                    `).join('')}
+                                                </ul>
+                                            </div>
+                                            <div>
+                                                <h4 class="text-red-300 font-bold mb-3 flex items-center gap-2">
+                                                    <span class="text-2xl">⚠️</span>
+                                                    Limitations
+                                                </h4>
+                                                <ul class="space-y-2">
+                                                    ${primaryApp.cons.map(con => `
+                                                        <li class="text-white text-sm">• ${con}</li>
+                                                    `).join('')}
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Alternative Apps -->
+                            <div class="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20 mb-8">
+                                <h3 class="text-2xl font-bold text-white mb-6">📱 Comparaison avec Autres Applications</h3>
+                                <div class="grid grid-cols-3 gap-4">
+                                    ${Object.entries(apps).map(([key, app]) => `
+                                        <div class="bg-white/5 rounded-xl p-4 border-2 ${
+                                            key === recommendation.primary ? 'border-green-500' : 'border-white/20'
+                                        }">
+                                            <div class="text-center mb-3">
+                                                <div class="text-4xl mb-2">${app.icon}</div>
+                                                <div class="text-white font-bold">${app.name}</div>
+                                                ${key === recommendation.primary ? `
+                                                    <div class="mt-2 px-3 py-1 bg-green-600 rounded-full text-xs text-white font-bold inline-block">
+                                                        RECOMMANDÉ
+                                                    </div>
+                                                ` : ''}
+                                            </div>
+                                            <div class="text-xs space-y-1">
+                                                ${app.pros.slice(0, 2).map(pro => `
+                                                    <div class="text-green-300">✓ ${pro}</div>
+                                                `).join('')}
+                                                ${app.cons.slice(0, 2).map(con => `
+                                                    <div class="text-red-300">✗ ${con}</div>
+                                                `).join('')}
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+
+                            <!-- Bonnes Pratiques -->
+                            <div class="bg-indigo-500/20 border border-indigo-500/50 rounded-xl p-6 mb-8">
+                                <h3 class="text-indigo-300 font-bold text-xl mb-4">🛡️ Bonnes Pratiques Recommandées</h3>
+                                <div class="grid grid-cols-2 gap-6 text-white text-sm">
+                                    <div>
+                                        <p class="font-semibold mb-2 text-yellow-300">Sécurité Appareil:</p>
+                                        <ul class="space-y-1 text-gray-300">
+                                            <li>• Chiffrement complet activé</li>
+                                            <li>• Code de verrouillage fort (6+ chiffres)</li>
+                                            <li>• Mises à jour régulières</li>
+                                            <li>• Authentification 2 facteurs</li>
+                                        </ul>
+                                    </div>
+                                    <div>
+                                        <p class="font-semibold mb-2 text-yellow-300">Usage Application:</p>
+                                        <ul class="space-y-1 text-gray-300">
+                                            <li>• Vérifier numéros de sécurité</li>
+                                            <li>• Messages éphémères si sensible</li>
+                                            <li>• Désactiver backup cloud (WhatsApp)</li>
+                                            <li>• Activer Secret Chats (Telegram)</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button onclick="restart()" class="w-full px-8 py-6 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xl rounded-xl transition-all flex items-center justify-center gap-3">
+                                🔄 Refaire le Quiz
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        window.selectAnswer = selectAnswer;
+        window.restart = restart;
+        window.currentQuestion = 0;
+
+        render();
+    </script>
+</body>
+</html>

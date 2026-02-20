@@ -200,55 +200,52 @@ function App() {
           <div className="flex flex-wrap justify-center gap-4 animate-fade-in-up animation-delay-600">
             <div className="inline-flex items-center gap-2 bg-blue-900/40 backdrop-blur-sm px-6 py-3 rounded-full border border-blue-500/50 hover:border-blue-400 transition-all hover:scale-105 cursor-default shadow-lg">
               <span className="text-3xl">🎯</span>
-              <span className="text-blue-300 font-bold">{simulations.length} Simulations</span>
-            </div>
-            <div className="inline-flex items-center gap-2 bg-purple-900/40 backdrop-blur-sm px-6 py-3 rounded-full border border-purple-500/50 hover:border-purple-400 transition-all hover:scale-105 cursor-default shadow-lg">
-              <span className="text-3xl">🔬</span>
-              <span className="text-purple-300 font-bold">Temps Réel</span>
+              <div className="text-left">
+                <div className="text-xs text-gray-400 font-semibold">Projet Académique</div>
+                <div className="text-sm font-bold">L3 Informatique</div>
+              </div>
             </div>
             <div className="inline-flex items-center gap-2 bg-green-900/40 backdrop-blur-sm px-6 py-3 rounded-full border border-green-500/50 hover:border-green-400 transition-all hover:scale-105 cursor-default shadow-lg">
-              <span className="text-3xl">✨</span>
-              <span className="text-green-300 font-bold">100% Interactif</span>
+              <span className="text-3xl">🇧🇫</span>
+              <div className="text-left">
+                <div className="text-xs text-gray-400 font-semibold">Université</div>
+                <div className="text-sm font-bold">Norbert Zongo</div>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Simulations par catégorie */}
-        {categories.map((cat, catIndex) => (
+        {/* 🆕 DISPOSITION VERTICALE - Chaque catégorie en colonne unique */}
+        {categories.map((category, catIndex) => (
           <div 
-            key={cat.id} 
-            className={`mb-16 ${isLoading ? 'opacity-0 translate-y-10' : 'opacity-100 translate-y-0'} transition-all duration-1000`}
-            style={{ transitionDelay: `${(catIndex + 1) * 200}ms` }}
+            key={category.id} 
+            className={`mb-16 ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-1000`}
+            style={{ animationDelay: `${catIndex * 200}ms` }}
           >
-            {/* En-tête de catégorie amélioré */}
-            <div className="mb-8 group">
-              <div className={`inline-flex items-center gap-4 px-8 py-4 rounded-2xl bg-gradient-to-r ${cat.color} bg-opacity-20 border border-white/30 backdrop-blur-sm shadow-xl hover:shadow-2xl transition-all hover:scale-105 cursor-default`}>
-                <span className="text-4xl group-hover:scale-110 transition-transform">{cat.icon}</span>
-                <div>
-                  <h2 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-300">
-                    {cat.title}
-                  </h2>
-                  <p className="text-sm text-gray-300 mt-1">{cat.description}</p>
-                </div>
-                <div className="ml-auto">
-                  <span className="px-4 py-2 bg-white/10 rounded-full text-sm font-semibold">
-                    {simulations.filter(s => s.category === cat.id).length} modules
-                  </span>
-                </div>
+            {/* En-tête de catégorie */}
+            <div className="mb-8 flex items-center gap-4">
+              <div className={`text-5xl ${hoveredCard && simulations.find(s => s.id === hoveredCard)?.category === category.id ? 'scale-125' : ''} transition-transform duration-300`}>
+                {category.icon}
+              </div>
+              <div className="flex-1">
+                <h2 className={`text-4xl font-black mb-2 bg-clip-text text-transparent bg-gradient-to-r ${category.color}`}>
+                  {category.title}
+                </h2>
+                <p className="text-gray-400 text-lg">{category.description}</p>
               </div>
             </div>
 
-            {/* Grille de cartes */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {/* 🆕 GRILLE VERTICALE - 1 seule colonne */}
+            <div className="space-y-6">
               {simulations
-                .filter(sim => sim.category === cat.id)
+                .filter(sim => sim.category === category.id)
                 .map((sim, index) => (
                   <button
                     key={sim.id}
                     onClick={() => handleSimulationClick(sim.id)}
                     onMouseEnter={() => setHoveredCard(sim.id)}
                     onMouseLeave={() => setHoveredCard(null)}
-                    className={`group relative p-8 bg-gradient-to-br ${sim.gradient} rounded-3xl shadow-2xl hover:shadow-blue-500/50 transition-all duration-500 text-left overflow-hidden transform hover:scale-105 hover:-rotate-1`}
+                    className={`group relative w-full p-8 bg-gradient-to-br ${sim.gradient} rounded-3xl shadow-2xl hover:shadow-blue-500/50 transition-all duration-500 text-left overflow-hidden transform hover:scale-[1.02] hover:-translate-y-2`}
                     style={{ 
                       animationDelay: `${index * 100}ms`,
                       animation: isLoading ? 'none' : 'fadeInUp 0.6s ease-out forwards'
@@ -265,35 +262,36 @@ function App() {
                       </div>
                     )}
                     
-                    <div className="relative z-10">
-                      {/* Icône avec animation */}
-                      <div className="text-7xl mb-6 group-hover:scale-125 group-hover:rotate-12 transition-all duration-500">
+                    {/* Contenu en flex horizontal pour version verticale */}
+                    <div className="relative z-10 flex items-center gap-8">
+                      {/* Icône */}
+                      <div className="text-7xl group-hover:scale-125 group-hover:rotate-12 transition-all duration-500 flex-shrink-0">
                         {sim.icon}
                       </div>
                       
-                      {/* Titre */}
-                      <h3 className="text-2xl font-bold mb-3 group-hover:text-white transition-colors">
-                        {sim.title}
-                      </h3>
-                      
-                      {/* Description */}
-                      <p className="text-sm text-gray-100 opacity-90 mb-4 leading-relaxed">
-                        {sim.description}
-                      </p>
-                      
-                      {/* Stats */}
-                      <div className="flex items-center gap-2 mb-4 text-xs bg-black/20 px-3 py-2 rounded-lg backdrop-blur-sm">
-                        <span className="text-yellow-300">⚡</span>
-                        <span className="text-white font-semibold">{sim.stats}</span>
+                      {/* Contenu */}
+                      <div className="flex-1">
+                        {/* Titre */}
+                        <h3 className="text-3xl font-bold mb-3 group-hover:text-white transition-colors">
+                          {sim.title}
+                        </h3>
+                        
+                        {/* Description */}
+                        <p className="text-base text-gray-100 opacity-90 mb-4 leading-relaxed">
+                          {sim.description}
+                        </p>
+                        
+                        {/* Stats */}
+                        <div className="flex items-center gap-2 text-sm bg-black/20 px-4 py-2 rounded-lg backdrop-blur-sm inline-flex">
+                          <span className="text-yellow-300">⚡</span>
+                          <span className="text-white font-semibold">{sim.stats}</span>
+                        </div>
                       </div>
-                      
-                      {/* Bouton d'action */}
-                      <div className="mt-6 flex items-center justify-between">
-                        <span className="text-sm font-bold group-hover:text-white transition-colors">
-                          Démarrer la simulation
-                        </span>
-                        <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center group-hover:bg-white/30 transition-all group-hover:scale-110">
-                          <span className="text-xl group-hover:translate-x-1 transition-transform">→</span>
+
+                      {/* Flèche d'action */}
+                      <div className="flex-shrink-0">
+                        <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center group-hover:bg-white/30 transition-all group-hover:scale-110">
+                          <span className="text-3xl group-hover:translate-x-2 transition-transform">→</span>
                         </div>
                       </div>
                     </div>
@@ -447,6 +445,7 @@ function App() {
       `}</style>
     </div>
   );
+  
 }
 
 export default App;
