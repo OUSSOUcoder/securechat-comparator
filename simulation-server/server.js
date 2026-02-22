@@ -20,10 +20,10 @@ const io = new Server(server, {
 const rooms = new Map();
 const typingUsers = new Map();
 
-// ✅ FIX : utiliser globalThis.crypto au lieu de webcrypto
+// ✅ Utilisation de globalThis.crypto pour la compatibilité Node.js 18+ sur Render
 const subtle = globalThis.crypto.subtle;
 
-// Générer clé serveur au démarrage
+// Variables pour les clés serveur
 let serverSigningKeyPair;
 let serverSigningPublicKeyJWK;
 
@@ -35,15 +35,12 @@ async function initServerKeys() {
       ['sign', 'verify']
     );
     serverSigningPublicKeyJWK = await subtle.exportKey('jwk', serverSigningKeyPair.publicKey);
-    console.log('✅ Clés serveur générées');
+    console.log('✅ Clés serveur générées avec succès');
   } catch (error) {
-    console.error('❌ Erreur génération clés:', error);
+    console.error('❌ Erreur lors de la génération des clés:', error);
     throw error;
   }
 }
-
-// Initialiser avant de démarrer
-await initServerKeys();
 
 async function issueSenderCertificate(userId, senderKeyJWK, validityDays = 7) {
   const validUntil = new Date();
@@ -68,9 +65,9 @@ async function issueSenderCertificate(userId, senderKeyJWK, validityDays = 7) {
   };
 }
 
-console.log('🚀 Serveur de simulation démarré...');
+// --- ROUTES ---
 
-// Route de santé
+// Route de santé pour que Render sache que le serveur est prêt
 app.get('/health', (req, res) => {
   res.json({
     status: 'ok',
@@ -82,22 +79,52 @@ app.get('/health', (req, res) => {
   });
 });
 
-// ... reste du code socket.io inchangé ...
+// --- SOCKET.IO ---
 
-// ✅ FIX : Écouter sur 0.0.0.0 et utiliser process.env.PORT
-const PORT = process.env.PORT || 3001;
-
-server.listen(PORT, '0.0.0.0', () => {
-  console.log('🚀 Serveur de simulation démarré...');
-  console.log(`🌐 Serveur WebSocket sur port ${PORT}`);
-  console.log(`📊 Dashboard : http://localhost:${PORT}/health`);
+io.on('connection', (socket) => {
+  console.log(`🔌 Nouvel utilisateur connecté : ${socket.id}`);
+  
+  // Ajoute ici tes événements socket.io (join, message, etc.)
+  
+  socket.on('disconnect', () => {
+    console.log(`❌ Utilisateur déconnecté : ${socket.id}`);
+  });
 });
 
-// Gestion des erreurs
+// --- DÉMARRAGE SÉCURISÉ ---
+
+// ✅ On enveloppe tout dans une fonction async pour éviter le blocage au démarrage
+async function startServer() {
+  try {
+    console.log('⏳ Initialisation du serveur...');
+    
+    // Attendre la génération des clés avant d'ouvrir le port
+    await initServerKeys();
+
+    // Render injecte automatiquement le port dans process.env.PORT
+    const PORT = process.env.PORT || 10000;
+
+    server.listen(PORT, '0.0.0.0', () => {
+      console.log('-------------------------------------------');
+      console.log(`🚀 SERVEUR LIVE SUR LE PORT ${PORT}`);
+      console.log(`🔗 URL : https://securechat-server-cjhj.onrender.com`);
+      console.log(`📊 Health Check : /health`);
+      console.log('-------------------------------------------');
+    });
+  } catch (error) {
+    console.error('💥 Erreur fatale au démarrage:', error);
+    process.exit(1); // Arrête le processus en cas d'erreur critique
+  }
+}
+
+// Lancement du serveur
+startServer();
+
+// Gestion des erreurs globales
 process.on('uncaughtException', (error) => {
   console.error('❌ Exception non capturée:', error);
 });
 
-process.on('unhandledRejection', (reason, promise) => {
+process.on('unhandledRejection', (reason) => {
   console.error('❌ Promesse rejetée non gérée:', reason);
 });

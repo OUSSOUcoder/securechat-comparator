@@ -171,14 +171,13 @@ function MultiUserSimulation() {
   }, [crypto]);
 
   // Socket.io connection
-  useEffect(() => {
-    const newSocket = io('https://simulation-server-3.onrender.com', {
+ useEffect(() => {
+    const newSocket = io('https://securechat-server-cjhj.onrender.com', {
       transports: ['websocket'],
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000
     });
-
     newSocket.on('connect', () => setConnected(true));
     newSocket.on('disconnect', () => setConnected(false));
 
