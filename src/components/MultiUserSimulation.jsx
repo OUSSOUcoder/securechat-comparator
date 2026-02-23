@@ -172,12 +172,12 @@ function MultiUserSimulation() {
 
   // Socket.io connection
  useEffect(() => {
-    const newSocket = io('http://localhost:10000', {
-      transports: ['websocket'],
-      reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000
-    });
+   const newSocket = io('https://simulation-server-wp58.onrender.com', {
+  transports: ['websocket'],
+  reconnection: true,
+  reconnectionAttempts: 5,
+  reconnectionDelay: 1000
+});
     newSocket.on('connect', () => setConnected(true));
     newSocket.on('disconnect', () => setConnected(false));
 
