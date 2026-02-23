@@ -172,7 +172,7 @@ function MultiUserSimulation() {
 
   // Socket.io connection
  useEffect(() => {
-    const newSocket = io('https://securechat-server-cjhj.onrender.com', {
+    const newSocket = io('http://localhost:10000', {
       transports: ['websocket'],
       reconnection: true,
       reconnectionAttempts: 5,
@@ -293,32 +293,50 @@ function MultiUserSimulation() {
   };
 
   const generateKeys = async () => {
-    try {
-      // ⚠️ Pour éviter les incompatibilités avec d'anciennes clés (autres algos),
-      // on régénère systématiquement une nouvelle paire RSA-OAEP propre.
-      const { publicKey, privateKey, publicKeyJWK } = await crypto.generateIdentityKeys();
-      setMyPrivateKey(privateKey);
-      myPrivateKeyRef.current = privateKey;
+  try {
+    // ✅ Générer les clés RSA-OAEP directement avec Web Crypto API
+    const keyPair = await window.crypto.subtle.generateKey(
+      {
+        name: 'RSA-OAEP',
+        modulusLength: 2048,
+        publicExponent: new Uint8Array([1, 0, 1]),
+        hash: 'SHA-256'
+      },
+      true,
+      ['encrypt', 'decrypt']
+    );
 
-      const privateKeyJWK = await window.crypto.subtle.exportKey("jwk", privateKey);
-      await storage.saveKeys(username, publicKeyJWK, privateKeyJWK);
+    const publicKey = keyPair.publicKey;
+    const privateKey = keyPair.privateKey;
 
-      const fingerprint = await computePublicKeyFingerprint(publicKeyJWK);
-      setMyFingerprint(fingerprint);
+    // Exporter en JWK
+    const publicKeyJWK = await window.crypto.subtle.exportKey('jwk', publicKey);
+    const privateKeyJWK = await window.crypto.subtle.exportKey('jwk', privateKey);
 
-      // Identité Double Ratchet (ECDH P-256)
-      const identityKeyPair = await generateECDHKeyPair();
-      myIdentityKeyPairRef.current = identityKeyPair;
-      const identityPublicJWK = await window.crypto.subtle.exportKey('jwk', identityKeyPair.publicKey);
-      myIdentityPublicJWKRef.current = identityPublicJWK;
+    // Sauvegarder
+    setMyPrivateKey(privateKey);
+    myPrivateKeyRef.current = privateKey;
+    await storage.saveKeys(username, publicKeyJWK, privateKeyJWK);
 
-      return { publicKeyJWK, fingerprint, identityPublicJWK };
-    } catch (error) {
-      console.error('Erreur génération clés:', error);
-      showToast('Erreur génération des clés', 'error');
-      return null;
-    }
-  };
+    // Calculer l'empreinte
+    const fingerprint = await computePublicKeyFingerprint(publicKeyJWK);
+    setMyFingerprint(fingerprint);
+
+    // Identité Double Ratchet (ECDH P-256)
+    const identityKeyPair = await generateECDHKeyPair();
+    myIdentityKeyPairRef.current = identityKeyPair;
+    const identityPublicJWK = await window.crypto.subtle.exportKey('jwk', identityKeyPair.publicKey);
+    myIdentityPublicJWKRef.current = identityPublicJWK;
+
+    console.log('✅ Clés générées avec succès');
+
+    return { publicKeyJWK, fingerprint, identityPublicJWK };
+  } catch (error) {
+    console.error('❌ Erreur génération clés:', error);
+    showToast('Erreur génération des clés', 'error');
+    return null;
+  }
+};
 
   const joinRoom = async () => {
     if (!socket || !roomId || !username) {

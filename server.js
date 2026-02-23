@@ -9,7 +9,11 @@ app.use(cors());
 const server = createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: process.env.FRONTEND_URL || '*',
+    origin: process.env.FRONTEND_URL || [
+      'http://localhost:5173',
+      'http://localhost:3000',
+      'https://ton-app.vercel.app'  // ⬅️ Ajoute ton URL Vercel ici
+    ],
     methods: ['GET', 'POST'],
     credentials: true
   },
