@@ -172,7 +172,7 @@ function MultiUserSimulation() {
 
   // Socket.io connection
  useEffect(() => {
-   const newSocket = io('https://simulation-server-wp58.onrender.com', {
+  const newSocket = io('https://simulation-server-ocek.onrender.com', {
   transports: ['websocket'],
   reconnection: true,
   reconnectionAttempts: 5,
